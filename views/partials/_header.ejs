@@ -13,8 +13,8 @@
 
     
 
-    <% if(username){ %>
-      <span>logged In As: <%= username %></span>
+    <% if(user){ %>
+      <span>logged In As: <%= user.email %></span>
       <span><form class="form-inline" action="/logout" method="POST">
         <div class="form-group mb-2">           
           

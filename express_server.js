@@ -8,59 +8,89 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+};
+console.log(users);
+
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser())
+app.use(cookieParser());
 
-function generateRandomString(n) {
+const generateRandomString = function(n) {
   let randomString = '';
   let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-  for ( let i = 0; i < n; i++ ) {
-    const index = Math.floor(Math.random() * characters.length)    
-    randomString += characters[index]
- }
- return randomString;
-}
-console.log(generateRandomString(6))
+  for (let i = 0; i < n; i++) {
+    const index = Math.floor(Math.random() * characters.length);
+    randomString += characters[index];
+  }
+  return randomString;
+};
+console.log(generateRandomString(6));
 
-app.set ("view engine", "ejs"); //This tells the Express app to use EJS as its templating engine.
+const checkTheSameEmail = function(email) {
+  for (let eAddress in users) {
+    console.log(users[eAddress].email);
+    if (email === users[eAddress].email) {
+      return true;
+    }
+  }
+  return false;
+};
+
+app.set("view engine", "ejs"); //This tells the Express app to use EJS as its templating engine.
 
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { 
+  const userId = req.cookies.userId;
+  const templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]
-   };
+    //username: req.cookies["username"],
+    user: users[userId]
+  };
   res.render("urls_index", templateVars);
   
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {    
-    username: req.cookies["username"]
+  const userId = req.cookies.userId;
+  const templateVars = {
+    //username: req.cookies["username"]
+    user: users[userId]
   };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  
-  const templateVars = { 
-    shortURL: req.params.shortURL, 
+  const userId = req.cookies.userId;
+
+  const templateVars = {
+    shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]
+    //username: req.cookies["username"],
+    user: users[userId]
   };
   //console.log(req)
-  res.render("urls_show", templateVars);  
+  res.render("urls_show", templateVars);
   
 });
 
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
-  console.log(longURL)
+  console.log(longURL);
   res.redirect(longURL);
 });
 
@@ -75,39 +105,67 @@ app.get("/hello", (req, res) => {
 app.get("/register", (req, res) => {
   
   res.render("register");
+  
+});
+
+app.get("/login", (req, res) => {
+  
+  res.render("login");
+  
 });
 
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
   const shortURL = generateRandomString(6);
-  res.redirect(`/urls/${shortURL}`)
+  res.redirect(`/urls/${shortURL}`);
   //res.send("Ok");         // Respond with 'Ok' (we will replace this)
   urlDatabase[shortURL] = req.body["longURL"];
   //console.log(urlDatabase)
 
 });
 
+app.post("/register", (req, res) => {
+  //console.log("mmmmmmmmmmmm", req.body);  // Log the POST request body to the console
+  const id = generateRandomString(6);
+  console.log("userId", id);
+  if (req.body.email === '' || req.body.password === '' || checkTheSameEmail(req.body.email)) {
+    res.send(400);
+  } else {
+    users[id] = {
+      id: id,
+      email: req.body.email,
+      password: req.body.password
+    };
+  }
+
+  res.cookie('userId', id);
+  console.log(users);
+  res.redirect(`/urls`);
+ 
+
+});
+
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
-  res.redirect(`/urls`)
-})
+  res.redirect(`/urls`);
+});
 
 app.post("/urls/:shortURL", (req, res) => {
   urlDatabase[req.params.shortURL] = req.body["longURL"];
-  res.redirect(`/urls/${req.params.shortURL}`)
-})
+  res.redirect(`/urls/${req.params.shortURL}`);
+});
 
 app.post("/login", (req, res) => {
-  res.cookie('username', req.body.username)
-  //console.log("uuuuuuuuu", req.body.username)  
-  res.redirect(`/urls`)
-})
+  res.cookie('username', req.body.username);
+  res.redirect(`/urls`);
+});
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username') 
-  res.redirect(`/urls`)
-})
+  console.log(req);
+  res.clearCookie('userId');
+  res.redirect(`/urls`);
+});
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`)
+  console.log(`Example app listening on port ${PORT}!`);
 });
