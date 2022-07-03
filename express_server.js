@@ -48,7 +48,6 @@ const checkTheSameEmail = function(email) {
   return false;
 };
 
-
 app.set("view engine", "ejs"); //This tells the Express app to use EJS as its templating engine.
 
 app.get("/", (req, res) => {
@@ -67,7 +66,7 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const userId = req.cookies.userId;
-  const templateVars = {    
+  const templateVars = {
     user: users[userId]
   };
   res.render("urls_new", templateVars);
@@ -81,7 +80,6 @@ app.get("/urls/:shortURL", (req, res) => {
     longURL: urlDatabase[req.params.shortURL],
     user: users[userId]
   };
-  //console.log(req)
   res.render("urls_show", templateVars);
   
 });
@@ -118,12 +116,11 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
   //res.send("Ok");         // Respond with 'Ok' (we will replace this)
   urlDatabase[shortURL] = req.body["longURL"];
-  //console.log(urlDatabase)
 
 });
 
 app.post("/register", (req, res) => {
-  //console.log("mmmmmmmmmmmm", req.body);  // Log the POST request body to the console
+  //console.log(req.body);  // Log the POST request body to the console
   const id = generateRandomString(6);
   console.log("userId", id);
   if (req.body.email === '' || req.body.password === '' || checkTheSameEmail(req.body.email)) {
@@ -152,15 +149,14 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect(`/urls/${req.params.shortURL}`);
 });
 
-app.post("/login", (req, res) => {  
-  //console.log(req.body.email);
-  const user = checkTheSameEmail(req.body.email)
+app.post("/login", (req, res) => {
+  const user = checkTheSameEmail(req.body.email);
   if (!user) {
     res.send(403);
   }
   if (req.body.password !== user["password"]) {
     res.send(403);
-  }  
+  }
   res.cookie('userId', user["id"]);
   res.redirect(`/urls`);
 });
