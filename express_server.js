@@ -12,10 +12,14 @@ const urlDatabase = {
         longURL: "https://www.tsn.ca",
         userID: "abc"
     },
-    i3BoGr: {
+  i3BoGr: {
         longURL: "https://www.google.ca",
         userID: "abc"
-    }
+    },
+  idfort: {
+      longURL: "https://www.google.ca",
+      userID: "rty"
+  }
 };
 
 const users = {
@@ -36,8 +40,8 @@ const users = {
     password: "qaz"
   }
 };
-console.log(users);
-console.log(urlDatabase);
+//console.log(users);
+//console.log(urlDatabase);
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
@@ -64,6 +68,16 @@ const checkTheSameEmail = function(email) {
   return false;
 };
 
+const urlsForUser = function(id) {
+  const result = {}
+  for (let shortUrl in urlDatabase) {
+    if (urlDatabase[shortUrl].userID === id) {
+      result[shortUrl] = urlDatabase[shortUrl]      
+    }  
+  } return result
+} 
+//console.log(urlsForUser("abc"))
+
 app.set("view engine", "ejs"); //This tells the Express app to use EJS as its templating engine.
 
 app.get("/", (req, res) => {
@@ -72,10 +86,16 @@ app.get("/", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const userId = req.cookies.userId;
-  const templateVars = {
-    urls: urlDatabase,
+  
+  const templateVars = {    
+    urls: urlsForUser(userId),
     user: users[userId]
   };
+  if (!userId || !users[userId]) {
+    res.send("Hooray! It's time to log in!"); 
+    return
+  }
+
   res.render("urls_index", templateVars);
   
 });
@@ -93,7 +113,14 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const userId = req.cookies.userId;
-
+  if (!urlDatabase[req.params.shortURL])  {    
+    res.send("URL doesn't exist")
+    return
+  }
+  if (urlDatabase[req.params.shortURL].userID !== userId) {
+    res.send("No permission")
+    return
+  }
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
@@ -171,14 +198,31 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+const userId = req.cookies.userId;
+ if (!urlDatabase[req.params.shortURL])  {    
+    res.send("URL doesn't exist")
+    return
+  }
+  if (urlDatabase[req.params.shortURL].userID !== userId) {
+    res.send("No permission")
+    return
+  }
   delete urlDatabase[req.params.shortURL];
   res.redirect(`/urls`);
 });
 
-app.post("/urls/:shortURL", (req, res) => {
+app.post("/urls/:shortURL", (req, res) => {  //edit
   const userId = req.cookies.userId;
   if (!userId || !users[userId]) {
     res.send(403); 
+    return
+  }
+  if (!urlDatabase[req.params.shortURL])  {    
+    res.send("URL doesn't exist")
+    return
+  }
+  if (urlDatabase[req.params.shortURL].userID !== userId) {
+    res.send("No permission")
     return
   }
   urlDatabase[req.params.shortURL] = {longURL: req.body.longURL, userID: req.cookies.userId};;
