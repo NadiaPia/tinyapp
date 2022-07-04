@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cookieParser = require('cookie-parser');
 const PORT = 8080; // default port 8080
+const bcrypt = require('bcryptjs');
 
 /*const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -179,7 +180,7 @@ app.post("/urls", (req, res) => {
 
 app.post("/register", (req, res) => {
   //console.log(req.body);  // Log the POST request body to the console
-  const id = generateRandomString(6);
+  const id = generateRandomString(6); 
   console.log("userId", id);
   if (req.body.email === '' || req.body.password === '' || checkTheSameEmail(req.body.email)) {
     res.send(400);
@@ -187,7 +188,7 @@ app.post("/register", (req, res) => {
     users[id] = {
       id: id,
       email: req.body.email,
-      password: req.body.password
+      password: bcrypt.hashSync(req.body.password, 10) // found in the req.params object
     };
   }
 
@@ -234,8 +235,9 @@ app.post("/login", (req, res) => {
   if (!user) {
     res.send(403);
   }
-  if (req.body.password !== user["password"]) {
+  if (!bcrypt.compareSync(req.body.password, user.password)) {                              
     res.send(403);
+    return
   }
   res.cookie('userId', user["id"]);
   res.redirect(`/urls`);
