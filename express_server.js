@@ -1,3 +1,4 @@
+const {generateRandomString, checkTheSameEmail, urlsForUser} = require('./helpers.js')
 const express = require("express");
 const app = express();
 const cookieSession = require('cookie-session');
@@ -48,34 +49,6 @@ const users = {
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
-const generateRandomString = function(n) {
-  let randomString = '';
-  let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < n; i++) {
-    const index = Math.floor(Math.random() * characters.length);
-    randomString += characters[index];
-  }
-  return randomString;
-};
-
-const checkTheSameEmail = function(email) {
-  for (let eAddress in users) {
-    console.log(users[eAddress].email);
-    if (email === users[eAddress].email) {
-      return users[eAddress];
-    }
-  }
-  return false;
-};
-
-const urlsForUser = function(id) {
-  const result = {};
-  for (let shortUrl in urlDatabase) {
-    if (urlDatabase[shortUrl].userID === id) {
-      result[shortUrl] = urlDatabase[shortUrl];
-    }
-  } return result;
-};
 
 app.set("view engine", "ejs"); //This tells the Express app to use EJS as its templating engine.
 
@@ -87,7 +60,7 @@ app.get("/urls", (req, res) => {
   const userId = req.session.userId;
   
   const templateVars = {
-    urls: urlsForUser(userId),
+    urls: urlsForUser(userId, urlDatabase),
     user: users[userId]
   };
   if (!userId || !users[userId]) {
@@ -180,7 +153,7 @@ app.post("/register", (req, res) => {
   //console.log(req.body);  // Log the POST request body to the console
   const id = generateRandomString(6);
   console.log("userId", id);
-  if (req.body.email === '' || req.body.password === '' || checkTheSameEmail(req.body.email)) {
+  if (req.body.email === '' || req.body.password === '' || checkTheSameEmail(req.body.email, users)) {
     res.send(400);
   } else {
     users[id] = {
@@ -230,7 +203,7 @@ app.post("/urls/:shortURL", (req, res) => {  //edit
 });
 
 app.post("/login", (req, res) => {
-  const user = checkTheSameEmail(req.body.email);
+  const user = checkTheSameEmail(req.body.email, users);
   if (!user) {
     res.send(403);
   }
@@ -244,8 +217,8 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  console.log(req);
-  res.clearCookie('userId');
+  //console.log(req);
+  req.session = null;
   res.redirect(`/urls`);
 });
 
