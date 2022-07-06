@@ -141,10 +141,8 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
   const shortURL = generateRandomString(6);
   res.redirect(`/urls/${shortURL}`);
-  //res.send("Ok");         // Respond with 'Ok' (we will replace this)
   urlDatabase[shortURL] = {longURL: req.body.longURL, userID: req.session.userId};
 
 });
@@ -163,7 +161,6 @@ app.post("/register", (req, res) => {
     };
   }
 
-  //res.cookie('userId', id);
   req.session.userId = id;
   console.log(users);
   res.redirect(`/urls`);
@@ -185,7 +182,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/urls/:shortURL", (req, res) => {  //edit
-  const userId = req.session.userId; //req.cookie.userId;
+  const userId = req.session.userId; //req.cookie.userId were replaysed by req.session ;
   if (!userId || !users[userId]) {
     res.send(403);
     return;
@@ -203,6 +200,10 @@ app.post("/urls/:shortURL", (req, res) => {  //edit
 });
 
 app.post("/login", (req, res) => {
+  if (!req.body.email || !req.body.password) {
+    res.send(400);
+    return
+  }
   const user = checkTheSameEmail(req.body.email, users);
   if (!user) {
     res.send(403);
@@ -211,13 +212,12 @@ app.post("/login", (req, res) => {
     res.send(403);
     return;
   }
-  //res.cookie('userId', user["id"]);
+  
   req.session.userId = user.id;
   res.redirect(`/urls`);
 });
 
-app.post("/logout", (req, res) => {
-  //console.log(req);
+app.post("/logout", (req, res) => {  
   req.session = null;
   res.redirect(`/urls`);
 });

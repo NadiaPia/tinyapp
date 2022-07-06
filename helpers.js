@@ -11,7 +11,6 @@ const generateRandomString = function(n) {
 
 const checkTheSameEmail = function(email, dataBase) {
   for (let eAddress in dataBase) {
-    //console.log(dataBase[eAddress].email);
     if (email === dataBase[eAddress].email) {
       return dataBase[eAddress];
     }
